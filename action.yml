@@ -1,0 +1,50 @@
+name: Create and publish a crate tarball
+author: Michał Górny
+description: Create a Gentoo create tarball using pycargoebuild and attach it to a release
+inputs:
+  tag:
+    description: Tag to create release on
+    default: ${{ github.ref_name }}
+  dist-filename:
+    description: The name of distribution file (e.g. foo-1.2.3-crates.tar.xz)
+    default: ${{ github.event.repository.name }}-${{ github.ref_name }}-crates.tar.xz
+  directories:
+    description: Directories with Cargo.toml files to process
+    default: .
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install pycargoebuild
+      shell: bash
+      run: pip install pycargoebuild
+    - name: Grab the license mapping
+      shell: bash
+      run: |
+        wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf
+    - name: Cache fetched crates
+      uses: actions/cache@v4
+      with:
+        path: /tmp/dist
+        key: dist
+    - name: Create a dist tarball
+      shell: bash
+      run: |
+        pycargoebuild \
+          --crate-tarball \
+          --crate-tarball-path "${{ inputs.dist-filename }}" \
+          --distdir /tmp/dist \
+          --license-mapping license-mapping.conf \
+          ${{ inputs.directories }}
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        body:
+        files: ${{ inputs.dist-filename }}
+        tag_name: ${{ inputs.tag }}
+        fail_on_unmatched_files: true
