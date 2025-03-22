@@ -11,6 +11,9 @@ inputs:
   directories:
     description: Directories with Cargo.toml files to process
     default: .
+  run-cargo-update:
+    description: Run "cargo update" in top-level directory
+    default: false
 runs:
   using: composite
   steps:
@@ -20,6 +23,10 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
+    - name: Run cargo update
+      if: ${{ inputs.run-cargo-update }}
+      shell: bash
+      run: cargo update
     - name: Install pycargoebuild
       shell: bash
       run: pip install pycargoebuild
