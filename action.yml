@@ -24,7 +24,7 @@ runs:
       with:
         python-version: '3.13'
     - name: Run cargo update
-      if: ${{ inputs.run-cargo-update }}
+      if: ${{ inputs.run-cargo-update == true }}
       shell: bash
       run: cargo update
     - name: Install pycargoebuild
